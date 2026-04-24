@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0b0b0d"/>
+<meta name="description" content="RoadSoS — AI Emergency Services Finder"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>RoadSoS — Emergency AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+<link rel='stylesheet' href='style.css'/>
+</head>
+ 
+<body>
+<div id="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-mark">🚨</div>
+      <div>
+        <div class="logo-name">RoadSoS</div>
+        <div class="logo-tagline">AI Emergency Services • IIT Madras Hackathon 2026</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-btn active" onclick="setLang('en')" id="lang-en">EN</div>
+      <div class="lang-btn" onclick="setLang('hi')" id="lang-hi">हिं</div>
+      <div class="lang-btn" onclick="setLang('te')" id="lang-te">తె</div>
+      <div class="lang-btn" onclick="setLang('ta')" id="lang-ta">த</div>
+      <div class="lang-btn" onclick="setLang('kn')" id="lang-kn">ಕ</div>
+      <div class="status-pill" id="status-pill">
+        <div class="status-dot online" id="status-dot"></div>
+        <span id="status-label">Online</span>
+      </div>
+    </div>
+  </header>
+ 
+  <div id="offline-banner">📴 Offline Mode — Using cached data. Emergency: 108 | 100 | 112</div>
+ 
+  <div class="body">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-scroll">
+        <!-- SOS -->
+        <div class="sos-wrap">
+          <button class="sos-btn pulsing" id="sos-btn" onclick="triggerSOS(event)">
+            <span>🆘</span><span>SOS EMERGENCY</span>
+          </button>
+        </div>
+
+        <!-- SIMULATE CRASH (Future Scope PoC) -->
+        <div style="margin: 0 16px 12px;">
+          <button onclick="simulateCrash()" style="width: 100%; padding: 8px; background: rgba(255,40,32,0.08); border: 1px dashed var(--red); color: var(--red); border-radius: 8px; font-weight: 500; font-size: 11px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            💥 Simulate Auto-Crash (Future Scope)
+          </button>
+        </div>
+ 
+        <!-- LOCATION -->
+        <div class="loc-bar">
+          <span class="loc-icon">📍</span>
+          <span class="loc-text" id="loc-text">Detecting location...</span>
+          <button class="loc-refresh" onclick="getLocation()" title="Refresh location">↻</button>
+        </div>
+        
+        <!-- DEMO CITY SELECTOR -->
+        <div style="margin: 0 16px 12px; display:flex; align-items:center; gap:8px;">
+          <select id="demo-city-select" onchange="changeDemoCity()" style="width:100%; padding:8px 12px; border-radius:10px; background:var(--surface2); color:var(--text); border:1px solid var(--border); font-size:12.5px; font-weight:500; font-family:var(--font-body); cursor:pointer; outline:none;">
+            <option value="hyderabad">🏙️ Demo City: Hyderabad</option>
+            <option value="mumbai">🏙️ Demo City: Mumbai</option>
+            <option value="delhi">🏙️ Demo City: Delhi</option>
+            <option value="bangalore">🏙️ Demo City: Bengaluru</option>
+            <option value="chennai">🏙️ Demo City: Chennai</option>
+          </select>
+        </div>
+ 
+        <!-- QUICK SOS NUMBERS -->
+        <div class="sos-numbers">
+          <button class="sos-num-btn ambulance" onclick="callNumber('108')">
+            <span class="sos-num">108</span>
+            <span class="sos-num-label">Ambulance</span>
+          </button>
+          <button class="sos-num-btn police" onclick="callNumber('100')">
+            <span class="sos-num">100</span>
+            <span class="sos-num-label">Police</span>
+          </button>
+          <button class="sos-num-btn fire" onclick="callNumber('101')">
+            <span class="sos-num">101</span>
+            <span class="sos-num-label">Fire</span>
+          </button>
+          <button class="sos-num-btn unified" onclick="callNumber('112')">
+            <span class="sos-num">112</span>
+            <span class="sos-num-label">Unified</span>
+          </button>
+        </div>
+ 
+        <!-- CHATBOT -->
+        <div class="chat-wrap">
+          <div class="section-label">AI Emergency Assistant</div>
+          <div class="chat-msgs" id="chat-msgs">
+            <div class="msg bot">
+              <div class="msg-av">🤖</div>
+              <div class="msg-bubble" id="welcome-msg">🚨 RoadSoS active. Type your emergency or press SOS.<br><small style="opacity:0.6">Supports English, हिंदी, తెలుగు, தமிழ், ಕನ್ನಡ</small></div>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chat-input" placeholder="Describe emergency..." 
+              onkeydown="if(event.key==='Enter')sendChat()"/>
+            <button class="chat-send" onclick="sendChat()">➤</button>
+          </div>
+        </div>
+ 
+        <!-- SEVERITY -->
+        <div class="severity-bar" id="severity-bar" data-level="medium" style="margin-top:10px">
+          <div class="sev-indicator"></div>
+          <div class="sev-label" id="sev-label">MEDIUM</div>
+          <div class="sev-desc" id="sev-desc">Standard emergency response</div>
+        </div>
+ 
+        <!-- FILTER CHIPS -->
+        <div class="filter-wrap">
+          <div class="chip-row">
+            <button class="chip active-all" onclick="setFilter('all',this)">All Services</button>
+            <button class="chip" onclick="setFilter('trauma_center',this)">🏥 Hospital</button>
+            <button class="chip" onclick="setFilter('ambulance',this)">🚑 Ambulance</button>
+            <button class="chip" onclick="setFilter('police',this)">🚔 Police</button>
+            <button class="chip" onclick="setFilter('vehicle_rescue',this)">🔧 Rescue</button>
+          </div>
+        </div>
+ 
+        <!-- SERVICE CARDS -->
+        <div class="cards-wrap">
+          <div class="cards-title">Nearest Services</div>
+          <div id="cards-container">
+            <div class="empty-state" style="height:80px">
+              <div>📍 Share location to see nearby services</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+ 
+    <!-- MAIN PANEL -->
+    <main class="main-panel">
+      <!-- TAB BAR -->
+      <div class="tab-bar">
+        <button class="tab active" onclick="showTab('map',this)">🗺️ Live Map</button>
+        <button class="tab" onclick="showTab('firstaid',this)">🩹 First Aid</button>
+        <button class="tab" onclick="showTab('info',this)">ℹ️ Info & Law</button>
+      </div>
+ 
+      <!-- MAP VIEW -->
+      <div class="map-view" id="tab-map">
+        <div class="map-canvas" id="map-canvas">
+          <div class="map-city-label" style="top:15%;left:20%">INDIA</div>
+          <div class="map-center-marker" id="user-marker" style="display:none"></div>
+          <div id="service-pins"></div>
+          <div class="map-overlay-info">
+            <div class="map-overlay-title">ROADSOS MAP</div>
+            <div class="map-overlay-sub" id="map-subtitle">5 cities • 50 services</div>
+          </div>
+          <div class="map-legend">
+            <div class="legend-item"><div class="legend-dot trauma_center"></div>Trauma Center</div>
+            <div class="legend-item"><div class="legend-dot ambulance"></div>Ambulance</div>
+            <div class="legend-item"><div class="legend-dot police"></div>Police</div>
+            <div class="legend-item"><div class="legend-dot vehicle_rescue"></div>Vehicle Rescue</div>
+            <div class="legend-item"><div class="legend-dot user"></div>Your Location</div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- FIRST AID VIEW -->
+      <div class="firstaid-view" id="tab-firstaid" style="display:none">
+        <div class="fa-header">
+          <div class="fa-title">FIRST AID GUIDE</div>
+          <div class="fa-subtitle">Step-by-step emergency instructions — offline ready</div>
+        </div>
+        <div class="scenario-tabs">
+          <button class="sc-tab active" onclick="loadFirstAid('general',this)">General</button>
+          <button class="sc-tab" onclick="loadFirstAid('bleeding',this)">🩸 Bleeding</button>
+          <button class="sc-tab" onclick="loadFirstAid('unconscious',this)">💓 Unconscious</button>
+          <button class="sc-tab" onclick="loadFirstAid('burns',this)">🔥 Burns</button>
+          <button class="sc-tab" onclick="loadFirstAid('fracture',this)">🦴 Fracture</button>
+        </div>
+        <div id="firstaid-steps">
+          <div class="empty-state"><div class="spinner"></div><span>Loading...</span></div>
+        </div>
+      </div>
+ 
+      <!-- INFO VIEW -->
+      <div class="info-view" id="tab-info" style="display:none">
+        <div class="info-title">ROAD SAFETY & APP INFO</div>
+        
+        <div class="info-card" style="border: 1px solid var(--blue); background: rgba(10, 132, 255, 0.05);">
+          <div class="info-card-title" style="color: var(--blue);">🤖 RoadSoS AI Capabilities (Hackathon Demo)</div>
+          <div class="info-card-body" style="line-height: 1.6;">
+            <strong>Multilingual NLP Chatbot:</strong> Instantly detects emergency intents in English, Hindi, Telugu, Tamil, and Kannada.<br>
+            <strong>Geospatial Map Routing:</strong> Uses smart algorithms to calculate distances and visually plot the nearest Trauma Centers, Police, and Ambulances.<br>
+            <strong>Offline-First Architecture:</strong> Caches critical step-by-step first-aid protocols locally so they are available without internet in remote areas.
+          </div>
+        </div>
+ 
+        <div class="info-card">
+          <div class="info-card-title">⚖️ Good Samaritan Law — India</div>
+          <div class="info-card-body">
+            The Supreme Court of India and the Ministry of Road Transport &amp; Highways guarantee
+            that <strong>no bystander can be detained, harassed, or held liable</strong> for taking
+            an accident victim to hospital. You are protected — <strong>help without fear</strong>.
+            <div class="highlight-box">
+              "A Good Samaritan shall not be liable for any civil or criminal action for any injury to or
+              death of an accident victim, caused due to their negligence in providing emergency medical
+              assistance." — MoRTH Guidelines, 2016
+            </div>
+          </div>
+        </div>
+ 
+        <div class="info-card">
+          <div class="info-card-title">🏥 Golden Hour</div>
+          <div class="info-card-body">
+            The <strong>first 60 minutes after a road accident are critical</strong>. Immediate
+            medical attention during this window dramatically increases survival rates. Call 108 or
+            112 immediately — every second counts.
+          </div>
+        </div>
+ 
+        <div class="info-card">
+          <div class="info-card-title">📋 What to Tell Emergency Services</div>
+          <div class="info-card-body">
+            <strong>1.</strong> Your exact location (landmark / GPS / road name)<br>
+            <strong>2.</strong> Number of people injured<br>
+            <strong>3.</strong> Type of injuries (conscious? bleeding? breathing?)<br>
+            <strong>4.</strong> Type of vehicles involved<br>
+            <strong>5.</strong> Your phone number
+          </div>
+        </div>
+ 
+        <div class="info-card">
+          <div class="info-card-title">🚦 Road Accident Reporting — Motor Vehicles Act</div>
+          <div class="info-card-body">
+            Under Section 134 of the Motor Vehicles Act, 1988, the driver involved in an accident
+            <strong>must report to the nearest police station</strong> and render assistance to the
+            injured. Failure to do so is a punishable offence.
+          </div>
+        </div>
+ 
+        <div class="info-card">
+          <div class="info-card-title">🌐 City Coverage</div>
+          <div class="info-card-body">
+            <strong>Phase 1 (Live):</strong> Hyderabad, Mumbai, Delhi, Bangalore, Chennai<br>
+            <strong>Phase 2 (Planned):</strong> Pune, Kolkata, Ahmedabad, Jaipur, Lucknow<br>
+            <strong>Phase 3 (Future):</strong> Pan-India · Rural highways · International
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+ 
+<div id="toast"></div>
+ 
+<script src='script.js?v=3'></script>
+</body>
+</html>
